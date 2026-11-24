@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CineVault — Catálogo de Filmes</title>
+    <style>
+        :root { --bg:#14100f; --card:#231b19; --txt:#f3ece8; --muted:#b3a39b; --accent:#e5a823; --border:#3a2f2b; }
+        * { box-sizing: border-box; }
+        body { margin:0; font-family: system-ui, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--txt); }
+        .container { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; }
+        h1 { margin: 0 0 4px; } h1 span { color: var(--accent); }
+        .sub { color: var(--muted); margin-bottom: 24px; }
+        form.filtros { display:grid; grid-template-columns: 2fr 1fr 1fr auto auto; gap:8px; margin-bottom:16px; }
+        input, select, button, .btn-limpar { padding:10px 12px; border-radius:8px; border:1px solid var(--border);
+            background:var(--card); color:var(--txt); font-size:14px; }
+        button { background:var(--accent); border-color:var(--accent); color:#1a1306; cursor:pointer; font-weight:700; }
+        .btn-limpar { text-decoration:none; text-align:center; }
+        .resumo { color:var(--muted); margin-bottom:12px; font-size:14px; }
+        .filme { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:10px;
+            display:flex; justify-content:space-between; gap:16px; align-items:center; }
+        .filme h2 { margin:0 0 6px; font-size:18px; }
+        .meta { color:var(--muted); font-size:13px; }
+        .tag { display:inline-block; background:#33271f; border-radius:999px; padding:2px 10px; margin-right:6px; font-size:12px; color:var(--txt); }
+        .nota { font-size:22px; font-weight:700; color:var(--accent); min-width:56px; text-align:right; }
+        .vazio { text-align:center; padding:40px; color:var(--muted); background:var(--card); border-radius:12px; }
+        .paginacao { display:flex; justify-content:center; align-items:center; gap:16px; margin-top:20px; }
+        .paginacao a { color:var(--txt); text-decoration:none; background:var(--card); border:1px solid var(--border);
+            padding:8px 14px; border-radius:8px; }
+        .paginacao .off { color:#6d5f58; border:1px solid var(--border); padding:8px 14px; border-radius:8px; }
+        @media (max-width:700px){ form.filtros { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Cine<span>Vault</span></h1>
+    <p class="sub">Catálogo de filmes — pesquise, filtre e navegue.</p>
+
+    <form method="get" class="filtros">
+        <input type="text" name="q" value="{{ busca }}" placeholder="Pesquisar por título do filme...">
+
+        <select name="diretor">
+            <option value="">Todos os diretores</option>
+            {% for d in diretores %}
+                <option value="{{ d.id }}" {% if d.id|stringformat:"s" == diretor_sel %}selected{% endif %}>{{ d.nome }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="categoria">
+            <option value="">Todas as categorias</option>
+            {% for c in categorias %}
+                <option value="{{ c.id }}" {% if c.id|stringformat:"s" == categoria_sel %}selected{% endif %}>{{ c.nome }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Filtrar</button>
+        <a class="btn-limpar" href="{% url 'catalogo:lista_filmes' %}">Limpar</a>
+    </form>
+
+    <p class="resumo">{{ total_resultados }} filme{{ total_resultados|pluralize }} encontrado{{ total_resultados|pluralize }}</p>
+
+    {% for filme in page_obj %}
+        <article class="filme">
+            <div>
+                <h2>{{ filme.titulo }}</h2>
+                <div>
+                    <span class="tag">🎬 {{ filme.diretor.nome }}</span>
+                    <span class="tag">🎭 {{ filme.categoria.nome }}</span>
+                    <span class="tag">📅 {{ filme.ano_lancamento }}</span>
+                </div>
+                {% if filme.sinopse %}<p class="meta">{{ filme.sinopse }}</p>{% endif %}
+            </div>
+            <div class="nota">★ {{ filme.nota }}</div>
+        </article>
+    {% empty %}
+        <div class="vazio">Nenhum filme encontrado com os filtros informados.</div>
+    {% endfor %}
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="paginacao">
+        {% if page_obj.has_previous %}
+            <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">« Anterior</a>
+        {% else %}
+            <span class="off">« Anterior</span>
+        {% endif %}
+
+        <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+            <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Próxima »</a>
+        {% else %}
+            <span class="off">Próxima »</span>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
+</body>
+</html>
